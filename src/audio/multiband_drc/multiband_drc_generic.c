@@ -5,10 +5,11 @@
 // Author: Pin-chih Lin <johnylin@google.com>
 
 #include <stdint.h>
-#include <sof/audio/drc/drc_helper.h>
+#include <sof/audio/drc/drc_algorithm.h>
 #include <sof/audio/format.h>
 #include <sof/audio/eq_iir/iir.h>
 #include <sof/audio/multiband_drc/multiband_drc.h>
+#include <sof/math/iir_df2t.h>
 
 static void multiband_drc_default_pass(const struct comp_dev *dev,
 				       const struct audio_stream *source,
@@ -38,7 +39,7 @@ static void multiband_drc_process_emp_crossover(struct multiband_drc_state *stat
 		crossover_s = &state->crossover[ch];
 
 		if (enable_emp)
-			emp_out = iir_df2t_2stage_biquads(emp_s, *buf_src);
+			emp_out = iir_df2t(emp_s, *buf_src);
 		else
 			emp_out = *buf_src;
 
@@ -54,51 +55,36 @@ static void multiband_drc_process_emp_crossover(struct multiband_drc_state *stat
 	}
 }
 
-static void multiband_drc_process_drc(struct drc_state *state,
-				      const struct sof_drc_params *p,
-				      int32_t *buf_src,
-				      int32_t *buf_sink,
-				      int nbyte,
-				      int nch)
+#if CONFIG_FORMAT_S16LE
+static void multiband_drc_s16_process_drc(struct drc_state *state,
+					  const struct sof_drc_params *p,
+					  int32_t *buf_src,
+					  int32_t *buf_sink,
+					  int nch)
 {
-	int16_t *pd_write16;
-	int16_t *pd_read16;
-	int32_t *pd_write32;
-	int32_t *pd_read32;
+	int16_t *pd_write;
+	int16_t *pd_read;
 	int ch;
 	int pd_write_index;
 	int pd_read_index;
-	int is_2byte = (nbyte == 2); /* otherwise is 4-bytes */
 
 	if (p->enabled && !state->processed) {
 		drc_update_envelope(state, p);
-		drc_compress_output(state, p, nbyte, nch);
+		drc_compress_output(state, p, 2, nch);
 		state->processed = 1;
 	}
 
 	pd_write_index = state->pre_delay_write_index;
 	pd_read_index = state->pre_delay_read_index;
 
-	if (is_2byte) { /* 2 bytes per sample */
-		for (ch = 0; ch < nch; ++ch) {
-			pd_write16 = (int16_t *)state->pre_delay_buffers[ch] + pd_write_index;
-			pd_read16 = (int16_t *)state->pre_delay_buffers[ch] + pd_read_index;
-			*pd_write16 = sat_int16(Q_SHIFT_RND(*buf_src, 31, 15));
-			*buf_sink = *pd_read16 << 16;
+	for (ch = 0; ch < nch; ++ch) {
+		pd_write = (int16_t *)state->pre_delay_buffers[ch] + pd_write_index;
+		pd_read = (int16_t *)state->pre_delay_buffers[ch] + pd_read_index;
+		*pd_write = sat_int16(Q_SHIFT_RND(*buf_src, 31, 15));
+		*buf_sink = *pd_read << 16;
 
-			buf_src++;
-			buf_sink++;
-		}
-	} else { /* 4 bytes per sample */
-		for (ch = 0; ch < nch; ++ch) {
-			pd_write32 = (int32_t *)state->pre_delay_buffers[ch] + pd_write_index;
-			pd_read32 = (int32_t *)state->pre_delay_buffers[ch] + pd_read_index;
-			*pd_write32 = *buf_src;
-			*buf_sink = *pd_read32;
-
-			buf_src++;
-			buf_sink++;
-		}
+		buf_src++;
+		buf_sink++;
 	}
 
 	pd_write_index = (pd_write_index + 1) & DRC_MAX_PRE_DELAY_FRAMES_MASK;
@@ -112,11 +98,62 @@ static void multiband_drc_process_drc(struct drc_state *state,
 
 	/* Process the input division (32 frames). */
 	if (!(pd_write_index & DRC_DIVISION_FRAMES_MASK)) {
-		drc_update_detector_average(state, p, nbyte, nch);
+		drc_update_detector_average(state, p, 2, nch);
 		drc_update_envelope(state, p);
-		drc_compress_output(state, p, nbyte, nch);
+		drc_compress_output(state, p, 2, nch);
 	}
 }
+#endif /* CONFIG_FORMAT_S16LE */
+
+#if CONFIG_FORMAT_S24LE || CONFIG_FORMAT_S32LE
+static void multiband_drc_s32_process_drc(struct drc_state *state,
+					  const struct sof_drc_params *p,
+					  int32_t *buf_src,
+					  int32_t *buf_sink,
+					  int nch)
+{
+	int32_t *pd_write;
+	int32_t *pd_read;
+	int ch;
+	int pd_write_index;
+	int pd_read_index;
+
+	if (p->enabled && !state->processed) {
+		drc_update_envelope(state, p);
+		drc_compress_output(state, p, 4, nch);
+		state->processed = 1;
+	}
+
+	pd_write_index = state->pre_delay_write_index;
+	pd_read_index = state->pre_delay_read_index;
+
+	for (ch = 0; ch < nch; ++ch) {
+		pd_write = (int32_t *)state->pre_delay_buffers[ch] + pd_write_index;
+		pd_read = (int32_t *)state->pre_delay_buffers[ch] + pd_read_index;
+		*pd_write = *buf_src;
+		*buf_sink = *pd_read;
+
+		buf_src++;
+		buf_sink++;
+	}
+
+	pd_write_index = (pd_write_index + 1) & DRC_MAX_PRE_DELAY_FRAMES_MASK;
+	pd_read_index = (pd_read_index + 1) & DRC_MAX_PRE_DELAY_FRAMES_MASK;
+	state->pre_delay_write_index = pd_write_index;
+	state->pre_delay_read_index = pd_read_index;
+
+	/* Only perform delay frames by early return here if not enabled */
+	if (!p->enabled)
+		return;
+
+	/* Process the input division (32 frames). */
+	if (!(pd_write_index & DRC_DIVISION_FRAMES_MASK)) {
+		drc_update_detector_average(state, p, 4, nch);
+		drc_update_envelope(state, p);
+		drc_compress_output(state, p, 4, nch);
+	}
+}
+#endif /* CONFIG_FORMAT_S24LE || CONFIG_FORMAT_S32LE */
 
 static void multiband_drc_process_deemp(struct multiband_drc_state *state,
 					int32_t *buf_src,
@@ -141,7 +178,7 @@ static void multiband_drc_process_deemp(struct multiband_drc_state *state,
 		}
 
 		if (enable_deemp)
-			*buf_sink = iir_df2t_2stage_biquads(deemp_s, mix_out);
+			*buf_sink = iir_df2t(deemp_s, mix_out);
 		else
 			*buf_sink = mix_out;
 
@@ -204,8 +241,9 @@ static void multiband_drc_s16_default(const struct comp_dev *dev,
 		band_buf_drc_src = buf_drc_src;
 		band_buf_drc_sink = buf_drc_sink;
 		for (band = 0; band < nband; ++band) {
-			multiband_drc_process_drc(&state->drc[band], &cd->config->drc_coef[band],
-						  band_buf_drc_src, band_buf_drc_sink, 2, nch);
+			multiband_drc_s16_process_drc(&state->drc[band],
+						      &cd->config->drc_coef[band],
+						      band_buf_drc_src, band_buf_drc_sink, nch);
 			band_buf_drc_src += PLATFORM_MAX_CHANNELS;
 			band_buf_drc_sink += PLATFORM_MAX_CHANNELS;
 		}
@@ -261,8 +299,9 @@ static void multiband_drc_s24_default(const struct comp_dev *dev,
 		band_buf_drc_src = buf_drc_src;
 		band_buf_drc_sink = buf_drc_sink;
 		for (band = 0; band < nband; ++band) {
-			multiband_drc_process_drc(&state->drc[band], &cd->config->drc_coef[band],
-						  band_buf_drc_src, band_buf_drc_sink, 4, nch);
+			multiband_drc_s32_process_drc(&state->drc[band],
+						      &cd->config->drc_coef[band],
+						      band_buf_drc_src, band_buf_drc_sink, nch);
 			band_buf_drc_src += PLATFORM_MAX_CHANNELS;
 			band_buf_drc_sink += PLATFORM_MAX_CHANNELS;
 		}
@@ -318,8 +357,9 @@ static void multiband_drc_s32_default(const struct comp_dev *dev,
 		band_buf_drc_src = buf_drc_src;
 		band_buf_drc_sink = buf_drc_sink;
 		for (band = 0; band < nband; ++band) {
-			multiband_drc_process_drc(&state->drc[band], &cd->config->drc_coef[band],
-						  band_buf_drc_src, band_buf_drc_sink, 4, nch);
+			multiband_drc_s32_process_drc(&state->drc[band],
+						      &cd->config->drc_coef[band],
+						      band_buf_drc_src, band_buf_drc_sink, nch);
 			band_buf_drc_src += PLATFORM_MAX_CHANNELS;
 			band_buf_drc_sink += PLATFORM_MAX_CHANNELS;
 		}

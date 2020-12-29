@@ -16,6 +16,9 @@ anchor_freq = anchor_freq / (stage_ratio * stage_ratio);
 [emp(2), deemp(2)] = emp_deemp_stage_biquad(stage_gain, anchor_freq,
                                             anchor_freq / stage_ratio);
 
+% Adjust the stage gain (push gains to the last stage) of emphasis filter
+[emp(1), emp(2)] = stage_gain_adjust(emp(1), emp(2));
+
 % Print emp and deemp
 emp
 deemp
@@ -39,17 +42,19 @@ a1 = -(p1 + p2);
 a2 = p1 * p2;
 
 % Gain compensation to make 0dB at 0Hz
+% For emphasis filter, alpha should be > 1. Record the alpha gain and then we
+% will do the stage gain adjustment afterwards.
 alpha = (a0 + a1 + a2) / (b0 + b1 + b2);
-[rshift, gain] = decompose_gain(alpha);
 
-%     [a2  a1  b2  b1  b0  shift   gain]
-emp = [-a2, -a1, b2, b1, b0, rshift, gain];
+%     [ a2   a1  b2  b1  b0  shift gain]
+emp = [-a2, -a1, b2, b1, b0, 0, alpha];
 
+% For deemphasis filter, beta should be < 1. Multiply beta directly to b coeffs
+% to have a healthy scaling of biquads internally.
 beta = (b0 + b1 + b2) / (a0 + a1 + a2);
-[rshift, gain] = decompose_gain(beta);
 
-%       [a2  a1  b2  b1  b0  shift   gain]
-deemp = [-b2, -b1, a2, a1, a0, rshift, gain];
+%       [ a2   a1         b2         b1         b0  shift gain]
+deemp = [-b2, -b1, a2 * beta, a1 * beta, a0 * beta, 0, 1.0];
 
 end
 
@@ -84,6 +89,17 @@ end
 quant_coefs = cell2mat(quant_coefs);
 
 rmpath ../eq
+
+end
+
+function [bq1, bq2] = stage_gain_adjust(prev_bq1, prev_bq2);
+
+prev_bq1 = cell2mat(prev_bq1);
+prev_bq2 = cell2mat(prev_bq2);
+
+[rshift, gain] = decompose_gain(prev_bq1(7) * prev_bq2(7));
+bq1 = [prev_bq1(1:5) 0 1.0];
+bq2 = [prev_bq2(1:5) rshift gain];
 
 end
 

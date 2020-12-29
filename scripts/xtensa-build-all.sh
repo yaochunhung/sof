@@ -6,7 +6,7 @@
 set -e
 
 SUPPORTED_PLATFORMS=(byt cht bdw hsw apl skl kbl cnl sue icl jsl \
-                    imx8 imx8x imx8m tgl)
+                    imx8 imx8x imx8m tgl tgl-h)
 BUILD_ROM=no
 BUILD_DEBUG=no
 BUILD_FORCE_UP=no
@@ -255,6 +255,19 @@ do
 				PRIVATE_KEY_OPTION="-D${SIGNING_TOOL}_PRIVATE_KEY=$pwd/keys/otc_private_key_3k.pem"
 			fi
 			;;
+		tgl-h)
+			PLATFORM="tgph"
+			ARCH="xtensa-smp"
+			XTENSA_CORE="cavs2x_LX6HiFi3_2017_8"
+			HOST="xtensa-cnl-elf"
+			XTENSA_TOOLS_VERSION="RG-2017.8-linux"
+			HAVE_ROM='yes'
+			# default key for TGL
+			if [ -z "$PRIVATE_KEY_OPTION" ]
+			then
+				PRIVATE_KEY_OPTION="-D${SIGNING_TOOL}_PRIVATE_KEY=$pwd/keys/otc_private_key_3k.pem"
+			fi
+			;;
 		jsl)
 			PLATFORM="jasperlake"
 			ARCH="xtensa-smp"
@@ -377,16 +390,7 @@ do
 		make overrideconfig
 	fi
 
-	# TGL needs MEU tool for signing
-	if [ 'tgl' = "${platform}" ] && [ "${SIGNING_TOOL}" = "RIMAGE" ]
-	then # build unsigned FW binary
-		make sof -j "${BUILD_JOBS}" ${BUILD_VERBOSE}
-		if [ "$BUILD_ROM" = "yes" ]; then
-			make rom_dump  ${BUILD_VERBOSE}
-		fi
-	else # build signed FW binary
-		make bin -j "${BUILD_JOBS}" ${BUILD_VERBOSE}
-	fi
+	make bin -j "${BUILD_JOBS}" ${BUILD_VERBOSE}
 
 	cd "$WORKDIR"
 done # for platform in ...

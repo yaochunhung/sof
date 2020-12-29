@@ -33,6 +33,9 @@ if(NOT CONFIG_LIBRARY)
 	if(CONFIG_COMP_DRC)
 		add_subdirectory(drc)
 	endif()
+	if(CONFIG_COMP_MULTIBAND_DRC)
+		add_subdirectory(multiband_drc)
+	endif()
 	if(CONFIG_COMP_TONE)
 		add_local_sources(sof
 			tone.c
@@ -118,7 +121,7 @@ check_optimization(fma -mfma -DOPS_FMA)
 check_optimization(hifi2ep -mhifi2ep -DOPS_HIFI2EP)
 check_optimization(hifi3 -mhifi3 -DOPS_HIFI3)
 
-set(sof_audio_modules volume src asrc eq-fir eq-iir dcblock crossover tdfb drc)
+set(sof_audio_modules volume src asrc eq-fir eq-iir dcblock crossover tdfb drc multiband_drc)
 
 # sources for each module
 set(volume_sources volume/volume.c volume/volume_generic.c)

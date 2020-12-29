@@ -2,6 +2,14 @@
 
 if(CONFIG_SOF)
 
+if(CONFIG_LIBRARY)
+	set(ARCH host)
+	zephyr_include_directories(../src/platform/library/include)
+else()
+	# firmware build supports only xtensa arch for now
+	set(ARCH xtensa)
+endif()
+
 # Appends literal with path of the source file relative to the project root
 # It is useful if sources in given target need deterministic relative path
 # to the actually compiled file.
@@ -47,7 +55,7 @@ set(SOF_TRACE_PATH "${SOF_SRC_PATH}/trace")
 target_include_directories(SOF INTERFACE ../rimage/src/include)
 target_include_directories(SOF INTERFACE ../zephyr/include)
 target_include_directories(SOF INTERFACE ${SOF_SRC_PATH}/include)
-target_include_directories(SOF INTERFACE ${SOF_SRC_PATH}/arch/xtensa/include)
+target_include_directories(SOF INTERFACE ${SOF_SRC_PATH}/arch/${ARCH}/include)
 
 # SOF module init
 zephyr_library_named(modules_sof)
@@ -193,6 +201,9 @@ if (CONFIG_SOC_SERIES_INTEL_CAVS_V18)
 		${SOF_PLATFORM_PATH}/intel/cavs/lib/dai.c
 		${SOF_PLATFORM_PATH}/intel/cavs/lib/dma.c
 		#${SOF_PLATFORM_PATH}/intel/cavs/lps_pic_restore_vector.S
+	)
+
+	zephyr_library_sources_ifdef(CONFIG_CAVS_LPS
 		${SOF_PLATFORM_PATH}/intel/cavs/lps_wait.c
 	)
 
@@ -249,6 +260,9 @@ if (CONFIG_SOC_SERIES_INTEL_CAVS_V20)
 		${SOF_PLATFORM_PATH}/intel/cavs/lib/dai.c
 		${SOF_PLATFORM_PATH}/intel/cavs/lib/dma.c
 		#${SOF_PLATFORM_PATH}/intel/cavs/lps_pic_restore_vector.S
+	)
+
+	zephyr_library_sources_ifdef(CONFIG_CAVS_LPS
 		${SOF_PLATFORM_PATH}/intel/cavs/lps_wait.c
 	)
 
@@ -307,6 +321,9 @@ if (CONFIG_SOC_SERIES_INTEL_CAVS_V25)
 		${SOF_PLATFORM_PATH}/intel/cavs/lib/dai.c
 		${SOF_PLATFORM_PATH}/intel/cavs/lib/dma.c
 		#${SOF_PLATFORM_PATH}/intel/cavs/lps_pic_restore_vector.S
+	)
+
+	zephyr_library_sources_ifdef(CONFIG_CAVS_LPS
 		${SOF_PLATFORM_PATH}/intel/cavs/lps_wait.c
 	)
 
@@ -336,7 +353,6 @@ zephyr_include_directories(${SOF_PLATFORM_PATH}/${PLATFORM}/include)
 # Mandatory Files used on all platforms.
 # Commented files will be added/removed as integration dictates.
 zephyr_library_sources(
-	${SOF_SRC_PATH}/trace/dma-trace.c
 	${SOF_IPC_PATH}/dma-copy.c
 	${SOF_IPC_PATH}/ipc.c
 	${SOF_IPC_PATH}/handler.c
@@ -376,12 +392,16 @@ zephyr_library_sources(
 	${SOF_SRC_PATH}/schedule/dma_single_chan_domain.c
 	${SOF_SRC_PATH}/schedule/dma_multi_chan_domain.c
 	${SOF_SRC_PATH}/schedule/ll_schedule.c
-	${SOF_SRC_PATH}/trace/trace.c
 
 	# Bridge wrapper between SOF and Zephyr APIs - Will shrink over time.
 	wrapper.c
 	edf_schedule.c
 	schedule.c
+)
+
+zephyr_library_sources_ifdef(CONFIG_TRACE
+	${SOF_SRC_PATH}/trace/dma-trace.c
+	${SOF_SRC_PATH}/trace/trace.c
 )
 
 # Optional SOF sources - depends on Kconfig - WIP
