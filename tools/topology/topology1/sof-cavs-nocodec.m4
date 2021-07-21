@@ -15,7 +15,8 @@ include(`common/tlv.m4')
 include(`sof/tokens.m4')
 
 # Include DSP configuration
-include(`platform/intel/'PLATFORM`.m4')
+ifelse(PLATFORM, `tglh', `include(`platform/intel/tgl.m4')',
+       `include(`platform/intel/'PLATFORM`.m4')')
 
 # bxt has 2 cores but currently only one is enabled in the build
 ifelse(PLATFORM, `bxt', `define(NCORES, 1)')
@@ -47,12 +48,6 @@ define(DMIC16KPROC, `eq-iir-volume')
 define(DMICPROC_FILTER1, `eq_iir_coef_highpass_40hz_20db_48khz.m4')
 define(DMIC16KPROC_FILTER1, `eq_iir_coef_highpass_40hz_20db_16khz.m4')
 
-define(DMIC_48k_CORE_ID, `0')
-define(DMIC_16k_CORE_ID, `0')
-define(SSP0_CORE_ID, `0')
-define(SSP1_CORE_ID, `0')
-define(SSP2_CORE_ID, `0')
-
 ifelse(PLATFORM, `tgl',
 `
 define(DMIC_48k_CORE_ID, `3')
@@ -70,6 +65,12 @@ define(SSP0_CORE_ID, `0')
 define(SSP1_CORE_ID, `1')
 define(SSP2_CORE_ID, `2')
 ')
+
+define(DMIC_48k_CORE_ID, `0')
+define(DMIC_16k_CORE_ID, `0')
+define(SSP0_CORE_ID, `0')
+define(SSP1_CORE_ID, `0')
+define(SSP2_CORE_ID, `0')
 
 include(`platform/intel/intel-generic-dmic.m4')
 
@@ -251,6 +252,8 @@ dnl PCM_DUPLEX_ADD(name, pcm_id, playback, capture)
 PCM_DUPLEX_ADD(`Port'SSP0_IDX, 0, PIPELINE_PCM_7, PIPELINE_PCM_2)
 PCM_DUPLEX_ADD(`Port'SSP1_IDX, 1, PIPELINE_PCM_3, PIPELINE_PCM_4)
 PCM_DUPLEX_ADD(`Port'SSP2_IDX, 2, PIPELINE_PCM_8, PIPELINE_PCM_6)
+PCM_PLAYBACK_ADD(`Port'SSP0_IDX` Deep Buffer', 3, PIPELINE_PCM_11)
+PCM_PLAYBACK_ADD(`Port'SSP2_IDX` Deep Buffer', 4, PIPELINE_PCM_12)
 
 #
 # BE configurations - overrides config in ACPI if present
