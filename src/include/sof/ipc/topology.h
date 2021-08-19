@@ -241,4 +241,14 @@ static inline struct ipc_comp_dev * ipc_release_comp(struct ipc_comp_dev *cd)
 	return container_of(c, struct ipc_comp_dev, c);
 }
 
+/**
+ * \brief Release cache lock for component and frees.
+ * @param cd The component.
+ */
+static inline void ipc_release_free_comp(struct ipc_comp_dev *cd)
+{
+	struct coherent *c = coherent_release(&cd->c, sizeof(*cd));
+	rfree(container_of(c, struct ipc_comp_dev, c));
+}
+
 #endif

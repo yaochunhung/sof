@@ -292,11 +292,10 @@ int ipc_comp_free(struct ipc *ipc, uint32_t comp_id)
 		return ipc_process_on_core(core, false);
 	}
 
-	icd = ipc_release_comp(icd);
-
 	/* check state */
 	if (icd->cd->state != COMP_STATE_READY) {
 		tr_err(&ipc_tr, "ipc_comp_free(): invalid comp state %d", icd->cd->state);
+		ipc_release_comp(icd);
 		return -EINVAL;
 	}
 
@@ -304,7 +303,7 @@ int ipc_comp_free(struct ipc *ipc, uint32_t comp_id)
 	comp_free(icd->cd);
 	list_item_del(&icd->c.list);
 	rfree(icd->cd);
-	rfree(icd);
+	ipc_release_free_comp(icd);
 
 	return 0;
 }
