@@ -50,6 +50,8 @@ struct dma_domain {
 	uint32_t num_dma;	/* number of scheduling DMAs */
 	bool aggregated_irq;	/* true if aggregated interrupts */
 
+	/* per core data is allocated in SHARED attribute so cache
+	 * Alignment not needed */
 	/* mask of currently running channels */
 	uint32_t channel_mask[PLATFORM_NUM_DMACS][CONFIG_CORE_COUNT];
 	/* array of arguments for aggregated mode */

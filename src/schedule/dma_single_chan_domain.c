@@ -40,7 +40,7 @@ struct dma_domain {
 	uint32_t owner;		/* core owning the scheduling channel */
 	bool channel_changed;	/* true if we needed to re-register */
 
-	/* data per core */
+	/* data per core - SHARED so cache alignment not needed */
 	struct dma_domain_data data[CONFIG_CORE_COUNT];
 };
 

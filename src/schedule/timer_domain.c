@@ -24,7 +24,7 @@
 
 struct timer_domain {
 	struct timer *timer;
-	void *arg[CONFIG_CORE_COUNT];
+	void *arg[CONFIG_CORE_COUNT];	/* SHARED so alignment not needed */
 };
 
 static void timer_report_delay(int id, uint64_t delay)
