@@ -448,10 +448,11 @@ int ipc_buffer_new(struct ipc *ipc, const struct sof_ipc_buffer *desc)
 	ibd->c.core = desc->comp.core;
 	ibd->id = desc->comp.id;
 
+	/* this buffer is shared across cores. TODO: buffer could be unshared with coherent locking */
+	coherent_shared(ibd, c);
+
 	/* add new buffer to the list */
 	list_item_append(&ibd->c.list, &ipc->comp_list);
-
-	coherent_shared(ibd, c);
 
 	return ret;
 }
