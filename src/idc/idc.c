@@ -149,6 +149,7 @@ static int idc_params(uint32_t comp_id)
 
 	ret = comp_params(ipc_dev->cd, params);
 
+	ipc_release_comp(ipc_dev);
 
 	return ret;
 }
@@ -203,7 +204,7 @@ static int idc_prepare(uint32_t comp_id)
 	ret = comp_prepare(ipc_dev->cd);
 
 out:
-
+	ipc_release_comp(ipc_dev);
 	return ret;
 }
 
@@ -243,7 +244,7 @@ static int idc_trigger(uint32_t comp_id)
 	}
 
 out:
-
+	ipc_release_comp(ipc_dev);
 	return ret;
 }
 
@@ -264,7 +265,7 @@ static int idc_reset(uint32_t comp_id)
 
 	ret = comp_reset(ipc_dev->cd);
 
-
+	ipc_release_comp(ipc_dev);
 	return ret;
 }
 
