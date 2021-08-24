@@ -410,8 +410,7 @@ int ipc_pipeline_free(struct ipc *ipc, uint32_t comp_id)
 	}
 	ipc_pipe->pipeline = NULL;
 	list_item_del(&ipc_pipe->c.list);
-	ipc_pipe = ipc_release_comp(ipc_pipe);
-	rfree(ipc_pipe);
+	ipc_release_free_comp(ipc_pipe);
 	return 0;
 }
 
@@ -513,8 +512,6 @@ int ipc_buffer_free(struct ipc *ipc, uint32_t buffer_id)
 		return -EINVAL;
 	}
 
-	ibd = ipc_release_comp(ibd);
-
 	/*
 	 * Disconnect the buffer from the active component before freeing it.
 	 */
@@ -527,7 +524,7 @@ int ipc_buffer_free(struct ipc *ipc, uint32_t buffer_id)
 	/* free buffer and remove from list */
 	buffer_free(ibd->cb);
 	list_item_del(&ibd->c.list);
-	rfree(ibd);
+	ipc_release_free_comp(ibd);
 
 	return 0;
 }
