@@ -93,7 +93,14 @@ platform_list = [
 		"name": "imx8m",
 		"PLAT_CONFIG": "nxp_adsp_imx8m",
 		"RIMAGE_KEY": "ignored for imx8m"
-	}
+	},
+	{
+		"name": "mt8195",
+		"PLAT_CONFIG": "mediatek_adsp_mt8195",
+		"RIMAGE_KEY": "ignored for mt8195",
+		"XTENSA_CORE": "hifi4_8195_PROD",
+		"XTENSA_TOOLS_VERSION": f"RI-2019.1{xtensa_tools_version_postfix}"
+        }
 ]
 
 platform_names = [platform["name"] for platform in platform_list]
