@@ -509,6 +509,37 @@ if (CONFIG_SOC_SERIES_NXP_IMX8M)
 	set(PLATFORM "imx8m")
 endif()
 
+# MediaTek platforms
+if (CONFIG_SOC_SERIES_MEDIATEK_MT8195)
+	zephyr_library_sources(
+		${SOF_DRIVERS_PATH}/generic/dummy-dma.c
+		${SOF_DRIVERS_PATH}/mediatek/mt8195/afe-dai.c
+		${SOF_DRIVERS_PATH}/mediatek/mt8195/afe-drv.c
+		${SOF_DRIVERS_PATH}/mediatek/mt8195/afe-memif.c
+		${SOF_DRIVERS_PATH}/mediatek/mt8195/interrupt.c
+		${SOF_DRIVERS_PATH}/mediatek/mt8195/ipc.c
+		${SOF_DRIVERS_PATH}/mediatek/mt8195/timer.c
+	)
+
+	# Platform sources
+	zephyr_library_sources(
+		${SOF_PLATFORM_PATH}/mt8195/afe-platform.c
+		${SOF_PLATFORM_PATH}/mt8195/lib/clk.c
+		${SOF_PLATFORM_PATH}/mt8195/lib/dai.c
+		${SOF_PLATFORM_PATH}/mt8195/lib/dma.c
+		${SOF_PLATFORM_PATH}/mt8195/lib/memory.c
+		${SOF_PLATFORM_PATH}/mt8195/platform.c
+	)
+
+	# SOF core infrastructure - runs on top of Zephyr
+	zephyr_library_sources(
+		${SOF_SRC_PATH}/schedule/ll_schedule.c
+		${SOF_SRC_PATH}/drivers/interrupt.c
+	)
+
+	set(PLATFORM "mt8195")
+endif()
+
 zephyr_library_sources_ifdef(CONFIG_LIBRARY
 	${SOF_PLATFORM_PATH}/library/platform.c
 	${SOF_PLATFORM_PATH}/library/lib/dai.c

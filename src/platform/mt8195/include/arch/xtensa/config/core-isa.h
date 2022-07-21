@@ -396,7 +396,9 @@
 #define XCHAL_NUM_EXTINTERRUPTS		18	/* num of external interrupts */
 #define XCHAL_NUM_INTLEVELS		4	/* number of interrupt levels
 						   (not including level zero) */
-
+/*  NMI "interrupt level" (for use with EXCSAVE_n, EPS_n, EPC_n, RFI n):  */
+//#define XCHAL_NMILEVEL			(XCHAL_NUM_INTLEVELS + 1)
+#define XCHAL_NMILEVEL			5
 
 #define XCHAL_HAVE_HIGHPRI_INTERRUPTS	1   /* med/high-pri. interrupts */
 #define XCHAL_EXCM_LEVEL		2	/* level masked by PS.EXCM */

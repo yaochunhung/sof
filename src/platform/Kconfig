@@ -4,7 +4,8 @@ menu "Platform"
 
 choice
 	prompt "Platform"
-	default APOLLOLAKE
+	default MT8195
+	#default APOLLOLAKE
 
 config BAYTRAIL
 	bool "Build for Baytrail"

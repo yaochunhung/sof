@@ -235,11 +235,6 @@
 			XCHAL_SEP	XCHAL_INTLEVEL14_ANDBELOW_MASK \
 			XCHAL_SEP	XCHAL_INTLEVEL15_ANDBELOW_MASK
 
-#if 0 /*XCHAL_HAVE_NMI*/
-/*  NMI "interrupt level" (for use with EXCSAVE_n, EPS_n, EPC_n, RFI n):  */
-# define XCHAL_NMILEVEL		(XCHAL_NUM_INTLEVELS+1)
-#endif
-
 /*  Array of levels of each possible interrupt:  */
 #define XCHAL_INT_LEVELS		XCHAL_INT0_LEVEL \
 			XCHAL_SEP	XCHAL_INT1_LEVEL \

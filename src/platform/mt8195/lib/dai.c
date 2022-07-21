@@ -13,7 +13,7 @@
 #include <ipc/stream.h>
 
 #include <sof/drivers/afe-dai.h>
-#include <mt8195-afe-common.h>
+#include <platform/mt8195-afe-common.h>
 
 static int afe_dai_handshake[MT8195_DAI_NUM] = {
 	AFE_HANDSHAKE(MT8195_AFE_IO_ETDM2_OUT, MT8195_IRQ_13, MT8195_MEMIF_DL2),

@@ -323,7 +323,7 @@ uint32_t interrupt_disable(uint32_t irq, void *arg)
 /*
  * i.MX uses the IRQ_STEER
  */
-#if !CONFIG_IMX
+#if !(CONFIG_IMX || CONFIG_MEDIATEK)
 /*
  * CAVS IRQs are multilevel whereas BYT and BDW are DSP level only.
  */

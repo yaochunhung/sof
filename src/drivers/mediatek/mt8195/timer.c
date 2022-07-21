@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <stdint.h>
 
+#ifndef __ZEPHYR__
 void platform_timer_start(struct timer *timer)
 {
 	/*set 13M clksrc*/
@@ -111,6 +112,7 @@ uint64_t platform_timer_get(struct timer *timer)
 
 	return time;
 }
+#endif
 
 /* get timestamp for host stream DMA position */
 void platform_host_timestamp(struct comp_dev *host,
@@ -145,6 +147,7 @@ void platform_dai_wallclock(struct comp_dev *dai, uint64_t *wallclock)
 	*wallclock = platform_timer_get(timer_get());
 }
 
+#ifndef __ZEPHYR__
 static void platform_timer_handler(void *arg)
 {
 	struct timer *timer = arg;
@@ -203,3 +206,4 @@ void timer_disable(struct timer *timer, void *arg, int core)
 {
 	interrupt_disable(timer->irq, arg);
 }
+#endif

@@ -120,10 +120,12 @@ const struct ext_man_windows xsram_window
 	}
 };
 
+#ifndef __ZEPHYR__
 static SHARED_DATA struct timer timer_shared = {
 	.id = OSTIMER0,
 	.irq = LX_ADSP_TIMTER_IRQ0_B,
 };
+#endif
 
 /* Override the default MPU setup. This table matches the memory map
  * of the 'sample_controller' core and will need to be modified for
@@ -181,8 +183,10 @@ int platform_init(struct sof *sof)
 {
 	int ret;
 
+#ifndef __ZEPHYR__
 	sof->platform_timer = platform_shared_get(&timer_shared, sizeof(timer_shared));
 	sof->cpu_timers = sof->platform_timer;
+#endif
 
 	platform_interrupt_init();
 	platform_clock_init(sof);
@@ -192,7 +196,9 @@ int platform_init(struct sof *sof)
 	sof->platform_timer_domain = timer_domain_init(sof->platform_timer, PLATFORM_DEFAULT_CLOCK);
 	scheduler_init_ll(sof->platform_timer_domain);
 
+#ifndef __ZEPHYR__
 	platform_timer_start(sof->platform_timer);
+#endif
 	sa_init(sof, CONFIG_SYSTICK_PERIOD);
 
 	clock_set_freq(CLK_CPU(cpu_get_id()), CLK_MAX_CPU_HZ);

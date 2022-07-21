@@ -11,8 +11,8 @@
 #include <sof/sof.h>
 #include <sof/spinlock.h>
 
-#include <mt8195-afe-regs.h>
-#include <mt8195-afe-common.h>
+#include <platform/mt8195-afe-regs.h>
+#include <platform/mt8195-afe-common.h>
 
 extern struct dma_ops dummy_dma_ops;
 extern struct dma_ops memif_ops;

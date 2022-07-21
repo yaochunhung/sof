@@ -94,6 +94,7 @@ platform_list = [
 		"PLAT_CONFIG": "nxp_adsp_imx8m",
 		"RIMAGE_KEY": "ignored for imx8m"
 	},
+	# MediaTek platforms
 	{
 		"name": "mt8195",
 		"PLAT_CONFIG": "mediatek_adsp_mt8195",

@@ -7,8 +7,8 @@
 #include <sof/common.h>
 #include <errno.h>
 #include <sof/drivers/afe-drv.h>
-#include <mt8195-afe-regs.h>
-#include <mt8195-afe-common.h>
+#include <platform/mt8195-afe-regs.h>
+#include <platform/mt8195-afe-common.h>
 
 /*
  * AFE: Audio Front-End
